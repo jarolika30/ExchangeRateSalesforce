@@ -1,0 +1,172 @@
+<template>
+    <lightning-card>
+
+        <h1 class="slds-text-title_bold slds-text-heading_medium slds-text-title_caps slds-m-bottom_x-small slds-m-left_small">Exchange rates for {date}</h1>
+        <div class="slds-grid slds-wrap">
+            <template if:true={picklistValues.data}>
+                <div class="slds-col slds-m-around_medium display-style-inline">
+                    <lightning-combobox
+                        name="progress"
+                        label="Choose base currency"
+                        value={base}
+                        placeholder="Select currency"
+                        options={picklistValues.data.values}
+                        onchange={handleChange} 
+                        class="input-size">
+                    </lightning-combobox>
+                    <lightning-button label="Choose other dates" title="Non-primary action" onclick={handleChoosedate} class="display-style-block slds-m-top_x-small"></lightning-button>
+                </div>
+            </template>
+
+            <template if:true={futureCurrencies}>
+                <div class="slds-col slds-m-around_medium display-style-inline">
+                    <lightning-combobox
+                        name="addNewCurrency"
+                        label="Choose new currency"
+                        value=""
+                        placeholder="Select currency"
+                        options={futureCurrencies}
+                        onchange={handleNewCurrency}
+                        class="currency input-size">
+                    </lightning-combobox>
+                    <lightning-button label="Add new currency" title="Non-primary action" onclick={handleAddCurrency} class="display-style-block slds-m-top_x-small"></lightning-button>
+                </div>
+            </template>
+            </div>
+            <div class="slds-m-around_medium">
+                <h2 class="slds-m-top_xx-small slds-text-title_bold">1 {base} equals</h2>
+                <template if:true={results} for:each={results} for:item="result">
+                    <div  key={result.id}>
+                        <span class="slds-m-top_xx-small">{result.name}: {result.valueRate}</span>
+                    </div>
+                </template>
+            </div>
+            <div class="slds-m-around_medium">
+                   <div>
+                     <table if:true={resultsForDates} class="slds-table slds-table--bordered slds-table--striped slds-m-bottom_xx-small">
+                           <tr>
+                              <template if:true={resultsForDates} for:each={resultsForDates} for:item="result">
+                                 <td key={result.id}>
+                                    <span class="display-style-block" style="font-weight:bold;">{result.selectedDate}</span>
+                                    <span class="display-style-block">1 {base} equals</span>
+                                    <template if:true={result.currencies} for:each={result.currencies} for:item="currency">
+                                       <span key={currency.label} class="display-style-block">{currency.label}: {currency.value}</span>
+                                    </template>
+                                 </td>
+                              </template>
+                           </tr>
+                     </table>
+                   </div>
+            </div>
+
+        <template if:true={showModal}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+               <div class="slds-modal__container">
+                  <!-- modal header start -->
+                  <header class="slds-modal__header">
+                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                           alternative-text="close"
+                           variant="inverse"
+                           size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                     </button>
+                     <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">THE RESULT OF YOUR ACTION</h2>
+                  </header>
+                  <!-- modal body start -->
+                  <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                     <p class={style_of_message}>{message}</p>
+                  </div>
+                  <!-- modal footer start-->
+                  <footer class="slds-modal__footer">
+                     <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                  </footer>
+               </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={anotherDate}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+               <div class="slds-modal__container">
+                  <!-- modal header start -->
+                  <header class="slds-modal__header">
+                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                           alternative-text="close"
+                           variant="inverse"
+                           size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                     </button>
+                     <h2 id="modal-heading-02" class="slds-text-heading_medium slds-hyphenate" style="font-weight:bold;">Please, choose another day or period of the days!</h2>
+                  </header>
+                  <!-- modal body start -->
+                  <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-2">
+                     <div>
+                        <lightning-input type="date" name="inputStart" label="Enter start date" onchange={handleStartDate}></lightning-input>
+                        <lightning-input type="date" name="inputEnd" label="Enter end date" onchange={handleEndDate}></lightning-input>
+                        <p style="color:orange;">!If you want data for one day, fill only Start date</p>
+                        <p class={style_of_message}>{message}</p>
+                     </div>
+                  </div>
+                  <!-- modal footer start-->
+                  <footer class="slds-modal__footer">
+                     <button class="slds-button slds-button_neutral" onclick={handleShowDayOrPeriod}>Show</button>
+                     <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                  </footer>
+               </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <template if:true={search}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+               <div class="slds-modal__container">
+                  <!-- modal header start -->
+                  <header class="slds-modal__header">
+                     <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                           alternative-text="close"
+                           variant="inverse"
+                           size="small" ></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                     </button>
+                     <h2 id="modal-heading-03" class="slds-text-heading_medium slds-hyphenate" style="color:orange;font-weight:bold;">{absence}</h2>
+                  </header>
+                  <!-- modal body start -->
+                  <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-3">
+                           <div>
+                                 <p>{searchHeading}</p><br/>
+                                 <p>{subtitle}</p>
+                                 <template if:true={searchResults}>
+                                 <div>
+                                    <h2 class="slds-text-heading_medium" style="text-align: center;">{searchResultsTitle}</h2>
+                                    <p style="color: #808080; margin:5px;">
+                                       <template for:each={searchResults} for:item="result">
+                                          <div  key={result.id}>
+                                             <span style="font-weight: bold;">{result.selectedDate}</span><br/>
+                                             <span>{searchBase}</span><br/>
+                                             <template for:each={result.currencies} for:item="res">
+                                                <span key={label} class="slds-m-top_xx-small">{res.label}: {res.value}<br /></span>
+                                             </template>
+                                          </div>
+                                       </template>
+                                    </p>
+                                 </div>
+                              </template>
+                              <p style="color:red;">{searchError}</p>
+                          </div>
+                  </div>
+                  <!-- modal footer start-->
+                  <footer class="slds-modal__footer">
+                     <button class="slds-button slds-button_neutral" onclick={handleSearch}>Search</button>
+                     <button class="slds-button slds-button_neutral" oncklick={handleAddToDatabase}>Add to database</button>
+                     <button class="slds-button slds-button_neutral" onclick={closeModal}>Cancel</button>
+                  </footer>
+               </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </lightning-card>
+</template>

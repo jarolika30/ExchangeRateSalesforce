@@ -1,0 +1,19 @@
+.input-size {
+    width: 50%;
+}
+
+.display-style-inline {
+    display: inline-block;
+}
+
+.display-style-block {
+    display: block;
+}
+
+.red-font {
+    color: red;
+}
+
+.green-font {
+    color: green;
+}
